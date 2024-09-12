@@ -12,6 +12,7 @@ This module provides utils to add and emit new token events that are not in toke
 -  [Struct `CollectionUriMutate`](#0x3_token_event_store_CollectionUriMutate)
 -  [Struct `CollectionMaxiumMutateEvent`](#0x3_token_event_store_CollectionMaxiumMutateEvent)
 -  [Struct `CollectionMaxiumMutate`](#0x3_token_event_store_CollectionMaxiumMutate)
+-  [Struct `CollectionMaximumMutate`](#0x3_token_event_store_CollectionMaximumMutate)
 -  [Struct `OptInTransferEvent`](#0x3_token_event_store_OptInTransferEvent)
 -  [Struct `OptInTransfer`](#0x3_token_event_store_OptInTransfer)
 -  [Struct `UriMutationEvent`](#0x3_token_event_store_UriMutationEvent)
@@ -296,11 +297,58 @@ Event emitted when the collection maximum is mutated
 
 ## Struct `CollectionMaxiumMutate`
 
+
+
+<pre><code>#[<a href="../../aptos-framework/doc/event.md#0x1_event">event</a>]
+#[deprecated]
+<b>struct</b> <a href="token_event_store.md#0x3_token_event_store_CollectionMaxiumMutate">CollectionMaxiumMutate</a> <b>has</b> drop, store
+</code></pre>
+
+
+
+<details>
+<summary>Fields</summary>
+
+
+<dl>
+<dt>
+<code>creator_addr: <b>address</b></code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>collection_name: <a href="../../aptos-framework/../aptos-stdlib/../move-stdlib/doc/string.md#0x1_string_String">string::String</a></code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>old_maximum: u64</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>new_maximum: u64</code>
+</dt>
+<dd>
+
+</dd>
+</dl>
+
+
+</details>
+
+<a id="0x3_token_event_store_CollectionMaximumMutate"></a>
+
+## Struct `CollectionMaximumMutate`
+
 Event emitted when the collection maximum is mutated
 
 
 <pre><code>#[<a href="../../aptos-framework/doc/event.md#0x1_event">event</a>]
-<b>struct</b> <a href="token_event_store.md#0x3_token_event_store_CollectionMaxiumMutate">CollectionMaxiumMutate</a> <b>has</b> drop, store
+<b>struct</b> <a href="token_event_store.md#0x3_token_event_store_CollectionMaximumMutate">CollectionMaximumMutate</a> <b>has</b> drop, store
 </code></pre>
 
 
@@ -1226,7 +1274,7 @@ Emit the collection maximum mutation event
     <b>let</b> <a href="token_event_store.md#0x3_token_event_store">token_event_store</a> = <b>borrow_global_mut</b>&lt;<a href="token_event_store.md#0x3_token_event_store_TokenEventStoreV1">TokenEventStoreV1</a>&gt;(<a href="../../aptos-framework/../aptos-stdlib/../move-stdlib/doc/signer.md#0x1_signer_address_of">signer::address_of</a>(creator));
     <b>if</b> (std::features::module_event_migration_enabled()) {
         <a href="../../aptos-framework/doc/event.md#0x1_event_emit">event::emit</a>(
-            <a href="token_event_store.md#0x3_token_event_store_CollectionMaxiumMutate">CollectionMaxiumMutate</a> {
+            <a href="token_event_store.md#0x3_token_event_store_CollectionMaximumMutate">CollectionMaximumMutate</a> {
                 creator_addr: <a href="../../aptos-framework/../aptos-stdlib/../move-stdlib/doc/signer.md#0x1_signer_address_of">signer::address_of</a>(creator),
                 collection_name: collection,
                 old_maximum,

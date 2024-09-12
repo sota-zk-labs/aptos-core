@@ -57,14 +57,25 @@ module aptos_token::token_event_store {
         new_maximum: u64,
     }
 
+
+    #[deprecated]
     #[event]
-    /// Event emitted when the collection maximum is mutated
     struct CollectionMaxiumMutate has drop, store {
         creator_addr: address,
         collection_name: String,
         old_maximum: u64,
         new_maximum: u64,
     }
+
+    #[event]
+    /// Event emitted when the collection maximum is mutated
+    struct CollectionMaximumMutate has drop, store {
+        creator_addr: address,
+        collection_name: String,
+        old_maximum: u64,
+        new_maximum: u64,
+    }
+
 
     //
     // Token transfer related events
@@ -295,7 +306,7 @@ module aptos_token::token_event_store {
         let token_event_store = borrow_global_mut<TokenEventStoreV1>(signer::address_of(creator));
         if (std::features::module_event_migration_enabled()) {
             event::emit(
-                CollectionMaxiumMutate {
+                CollectionMaximumMutate {
                     creator_addr: signer::address_of(creator),
                     collection_name: collection,
                     old_maximum,
