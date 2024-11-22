@@ -13,8 +13,8 @@
 //! not modify free variables.
 //!
 //! Lambda lifting rewrites lambda expressions into construction
-//! of *closures*. A closure refers to a function and contains a partial list
-//! of arguments for that function, essentially currying it.  We use the
+//! of *closures* using the `EarlyBind` operation. A closure refers to a function and contains a list
+//! of "early bound" leading arguments for that function, essentially currying it.  We use the
 //! `EarlyBind` operation to construct a closure from a function and set of arguments,
 //! which must be the first `k` arguments to the function argument list.
 //!
@@ -204,7 +204,9 @@ impl<'a> LambdaLifter<'a> {
     /// - `closure_args` = corresponding expressions to provide as actual arg for each param
     /// - `param_index_mapping` = for each free var which is a Parameter from the enclosing function,
     ///    a mapping from index there to index in the params list
-    fn get_params_for_freevars(&mut self) -> (Vec<Parameter>, Vec<Exp>, BTreeMap<usize, usize>) {
+    fn get_params_for_freevars(
+        &mut self,
+    ) -> Option<(Vec<Parameter>, Vec<Exp>, BTreeMap<usize, usize>)> {
         let env = self.fun_env.module_env.env;
         let mut closure_args = vec![];
 
@@ -213,6 +215,9 @@ impl<'a> LambdaLifter<'a> {
         // functions (courtesy of #12317)
         let mut param_index_mapping = BTreeMap::new();
         let mut params = vec![];
+        let ty_params = self.fun_env.get_type_parameters_ref();
+        let ability_inferer = AbilityInferer::new(env, ty_params);
+        let mut saw_error = false;
 
         for (used_param_count, (param, var_info)) in
             mem::take(&mut self.free_params).into_iter().enumerate()
@@ -229,6 +234,18 @@ impl<'a> LambdaLifter<'a> {
                         name.display(env.symbol_pool())
                     ),
                 );
+                saw_error = true;
+            }
+            let param_abilities = ability_inferer.infer_abilities(&ty).1;
+            if !param_abilities.has_copy() {
+                env.error(
+                    &loc,
+                    &format!(
+                        "captured variable `{}` must have a value with `copy` ability", // TODO(LAMBDA)
+                        name.display(env.symbol_pool())
+                    ),
+                );
+                saw_error = true;
             }
             params.push(Parameter(name, ty.clone(), loc.clone()));
             let new_id = env.new_node(loc, ty);
@@ -252,6 +269,7 @@ impl<'a> LambdaLifter<'a> {
                         name.display(env.symbol_pool())
                     ),
                 );
+                saw_error = true;
             }
             params.push(Parameter(name, ty.clone(), loc.clone()));
             let new_id = env.new_node(loc, ty);
@@ -261,7 +279,11 @@ impl<'a> LambdaLifter<'a> {
             closure_args.push(ExpData::LocalVar(new_id, name).into_exp())
         }
 
-        (params, closure_args, param_index_mapping)
+        if !saw_error {
+            Some((params, closure_args, param_index_mapping))
+        } else {
+            None
+        }
     }
 
     fn get_arg_if_simple(arg: &Exp) -> Option<&Exp> {
@@ -670,7 +692,11 @@ impl<'a> ExpRewriterFunctions for LambdaLifter<'a> {
         // param_index_mapping = for each free var which is a Parameter from the enclosing function,
         //      a mapping from index there to index in the params list; other free vars are
         //      substituted automatically by using the same symbol for the param
-        let (mut params, mut closure_args, param_index_mapping) = self.get_params_for_freevars();
+        let Some((mut params, mut closure_args, param_index_mapping)) =
+            self.get_params_for_freevars()
+        else {
+            return None;
+        };
 
         // Some(ExpData::Invalid(env.clone_node(id)).into_exp());
         // Add lambda args. For dealing with patterns in lambdas (`|S{..}|e`) we need
@@ -733,6 +759,15 @@ impl<'a> ExpRewriterFunctions for LambdaLifter<'a> {
         let body = ExpRewriter::new(env, &mut replacer).rewrite_exp(body.clone());
         let fun_id = FunId::new(fun_name);
         let params_types = params.iter().map(|param| param.get_type()).collect();
+        if abilities.has_store() {
+            let loc = env.get_node_loc(id);
+            env.error(
+                &loc,
+                // TODO(LAMBDA)
+                "Lambdas expressions with `store` ability currently may only be a simple call to an existing `public` function.  This lambda expression requires defining a `public` helper function, which might affect module upgradeability and is not yet supported."
+            );
+            return None;
+        };
         self.lifted.push(ClosureFunction {
             loc: lambda_loc.clone(),
             fun_id,
