@@ -695,7 +695,7 @@ module aptos_framework::coin {
             let paired_metadata_opt = paired_metadata<CoinType>();
             (option::is_some(
                 &paired_metadata_opt
-            ) && migrated_primary_fungible_store_exists(account_addr, option::destroy_some(paired_metadata_opt)))
+            ) && can_receive_paired_fungible_asset(account_addr, option::destroy_some(paired_metadata_opt)))
         }
     }
 
@@ -814,7 +814,7 @@ module aptos_framework::coin {
             merge(&mut coin_store.coin, coin);
         } else {
             let metadata = paired_metadata<CoinType>();
-            if (option::is_some(&metadata) && migrated_primary_fungible_store_exists(
+            if (option::is_some(&metadata) && can_receive_paired_fungible_asset(
                 account_addr,
                 option::destroy_some(metadata)
             )) {
@@ -825,11 +825,11 @@ module aptos_framework::coin {
         }
     }
 
-    inline fun migrated_primary_fungible_store_exists(
+    inline fun can_receive_paired_fungible_asset(
         account_address: address,
         metadata: Object<Metadata>
     ): bool {
-        features::new_accounts_default_to_fa_apt_store_enabled() || {
+        (features::new_accounts_default_to_fa_apt_store_enabled() && object::object_address(&metadata) == @0xa) || {
             let primary_store_address = primary_fungible_store::primary_store_address<Metadata>(
                 account_address,
                 metadata
@@ -849,7 +849,7 @@ module aptos_framework::coin {
             merge(&mut coin_store.coin, coin);
         } else {
             let metadata = paired_metadata<CoinType>();
-            if (option::is_some(&metadata) && migrated_primary_fungible_store_exists(
+            if (option::is_some(&metadata) && can_receive_paired_fungible_asset(
                 account_addr,
                 option::destroy_some(metadata)
             )) {
@@ -1924,6 +1924,7 @@ module aptos_framework::coin {
         account::create_account_for_test(bob_addr);
         let (burn_cap, freeze_cap, mint_cap) = initialize_and_register_fake_money(account, 1, true);
         maybe_convert_to_fungible_store<FakeMoney>(aaron_addr);
+        maybe_convert_to_fungible_store<FakeMoney>(bob_addr);
         deposit(aaron_addr, mint<FakeMoney>(1, &mint_cap));
 
         force_deposit(account_addr, mint<FakeMoney>(100, &mint_cap));
@@ -1991,7 +1992,7 @@ module aptos_framework::coin {
         });
     }
 
-    #[test(account = @aptos_framework, aaron = @0xaa10)]
+    #[test(account = @aptos_framework)]
     fun test_migration_with_existing_primary_fungible_store(
         account: &signer,
     ) acquires CoinConversionMap, CoinInfo, CoinStore, PairedCoinType {
@@ -2004,7 +2005,7 @@ module aptos_framework::coin {
         assert!(coin_balance<FakeMoney>(account_addr) == 0, 0);
         assert!(balance<FakeMoney>(account_addr) == 100, 0);
         let coin = withdraw<FakeMoney>(account, 50);
-        assert!(migrated_primary_fungible_store_exists(account_addr, ensure_paired_metadata<FakeMoney>()), 0);
+        assert!(can_receive_paired_fungible_asset(account_addr, ensure_paired_metadata<FakeMoney>()), 0);
         maybe_convert_to_fungible_store<FakeMoney>(account_addr);
         deposit(account_addr, coin);
         assert!(coin_balance<FakeMoney>(account_addr) == 0, 0);
