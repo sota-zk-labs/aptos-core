@@ -1607,8 +1607,8 @@ impl Frame {
             // TODO(LAMBDA): implement closures
             Bytecode::LdFunction(..)
             | Bytecode::LdFunctionGeneric(..)
-            | Bytecode::Invoke(..)
-            | Bytecode::EarlyBind(..) => {
+            | Bytecode::InvokeFunction(..)
+            | Bytecode::EarlyBindFunction(..) => {
                 return Err(PartialVMError::new(StatusCode::UNIMPLEMENTED_FEATURE)
                     .with_message("closure opcodes in interpreter".to_owned()))
             },
@@ -1740,8 +1740,8 @@ impl Frame {
             // TODO: implement closures
             Bytecode::LdFunction(..)
             | Bytecode::LdFunctionGeneric(..)
-            | Bytecode::Invoke(..)
-            | Bytecode::EarlyBind(..) => {
+            | Bytecode::InvokeFunction(..)
+            | Bytecode::EarlyBindFunction(..) => {
                 return Err(PartialVMError::new(StatusCode::UNIMPLEMENTED_FEATURE)
                     .with_message("closure opcodes in interpreter".to_owned()))
             },
@@ -2345,8 +2345,8 @@ impl Frame {
                     // TODO(LAMBDA): implement closures
                     Bytecode::LdFunction(..)
                     | Bytecode::LdFunctionGeneric(..)
-                    | Bytecode::Invoke(..)
-                    | Bytecode::EarlyBind(..) => {
+                    | Bytecode::InvokeFunction(..)
+                    | Bytecode::EarlyBindFunction(..) => {
                         return Err(PartialVMError::new(StatusCode::UNIMPLEMENTED_FEATURE)
                             .with_message("closure opcodes in interpreter".to_owned()))
                     },
