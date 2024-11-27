@@ -692,11 +692,7 @@ impl<'a> ExpRewriterFunctions for LambdaLifter<'a> {
         // param_index_mapping = for each free var which is a Parameter from the enclosing function,
         //      a mapping from index there to index in the params list; other free vars are
         //      substituted automatically by using the same symbol for the param
-        let Some((mut params, mut closure_args, param_index_mapping)) =
-            self.get_params_for_freevars()
-        else {
-            return None;
-        };
+        let (mut params, mut closure_args, param_index_mapping) = self.get_params_for_freevars()?;
 
         // Some(ExpData::Invalid(env.clone_node(id)).into_exp());
         // Add lambda args. For dealing with patterns in lambdas (`|S{..}|e`) we need
@@ -764,7 +760,7 @@ impl<'a> ExpRewriterFunctions for LambdaLifter<'a> {
             env.error(
                 &loc,
                 // TODO(LAMBDA)
-                "Lambdas expressions with `store` ability currently may only be a simple call to an existing `public` function.  This lambda expression requires defining a `public` helper function, which might affect module upgradeability and is not yet supported."
+                "The body of a lambdas expression with `store` ability currently must be a simple call to an existing `public` function, with lambda params the same as the *final* arguments to the function call."
             );
             return None;
         };
